@@ -32,6 +32,7 @@ def parse_log_file(file_path: str) -> dict:
     conn_batch: list[dict] = []
     anomaly_batch: list[dict] = []
     system_batch: list[dict] = []
+    log_lines_batch: list[dict] = []
 
     # State machine
     last_seen_ap: str | None = None
@@ -65,10 +66,20 @@ def parse_log_file(file_path: str) -> dict:
             if not header_parsed:
                 if line.startswith('---'):
                     header_parsed = True
+                    log_lines_batch.append({
+                        "line_number": line_number,
+                        "content": line,
+                        "category": "header",
+                    })
                     continue
                 if ': ' in line:
                     key, _, value = line.partition(': ')
                     metadata[key.strip()] = value.strip()
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "header",
+                })
                 continue
 
             # Parse timestamp
@@ -103,10 +114,20 @@ def parse_log_file(file_path: str) -> dict:
                         "error_count": int(err_count),
                         "error_detail": error_detail,
                     })
+                    log_lines_batch.append({
+                        "line_number": line_number,
+                        "content": line,
+                        "category": "connection",
+                    })
                 continue
 
             # Skip noise lines
             if should_skip(event_text):
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "noise",
+                })
                 continue
 
             # Tick reset detection
@@ -150,6 +171,11 @@ def parse_log_file(file_path: str) -> dict:
                     "energy_consumption": energy,
                     "temperature_c": temp_c,
                 })
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "battery",
+                })
 
                 # Anomaly checks with dedup
                 _check_threshold(anomaly_batch, last_fired, "BATT_PCT_CRIT", percent, 5,
@@ -168,6 +194,11 @@ def parse_log_file(file_path: str) -> dict:
             am = WIFI_AP.search(event_text)
             if am:
                 last_seen_ap = am.group(1)
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "wifi",
+                })
                 continue
 
             # --- MATCHER 2: WiFi Signal ---
@@ -197,6 +228,12 @@ def parse_log_file(file_path: str) -> dict:
                 pending_ram_load = None
                 pending_flash_avail = None
 
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "wifi",
+                })
+
                 # WiFi anomaly checks
                 _check_threshold(anomaly_batch, last_fired, "WIFI_CRIT", signal_pct, 20,
                                  line_number, server_time, device_time, tick, recover_above=20)
@@ -225,6 +262,11 @@ def parse_log_file(file_path: str) -> dict:
                     operator_reading_count = 0
                 else:
                     operator_reading_count += 1
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "operator",
+                })
                 continue
 
             # --- MATCHER 5: Roam (AP MON) ---
@@ -240,6 +282,11 @@ def parse_log_file(file_path: str) -> dict:
                         "from_ap": rm.group(1),
                         "to_ap": rm.group(2),
                     })
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "roam",
+                })
                 continue
 
             # --- MATCHER 5b: Roam (SURVEY) ---
@@ -255,36 +302,46 @@ def parse_log_file(file_path: str) -> dict:
                         "from_ap": srm.group(1),
                         "to_ap": srm.group(2),
                     })
+                log_lines_batch.append({
+                    "line_number": line_number,
+                    "content": line,
+                    "category": "roam",
+                })
                 continue
 
             # --- MATCHER 7: CPU ---
             cpu_m = CPU_USAGE.search(event_text)
             if cpu_m:
                 pending_cpu = float(cpu_m.group(1))
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "system"})
                 continue
 
             # --- MATCHER 7: RAM ---
             ram_m = RAM_USAGE.search(event_text)
             if ram_m:
                 pending_ram_load = int(ram_m.group(1))
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "system"})
                 continue
 
             # --- MATCHER 7: Flash ---
             flash_m = FLASH_USAGE.search(event_text)
             if flash_m:
                 pending_flash_avail = int(flash_m.group(1))
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "system"})
                 continue
 
             # --- MATCHER 7: MAC ---
             mac_m = MAC_ADDRESS.search(event_text)
             if mac_m:
                 metadata["mac_address"] = mac_m.group(1)
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "system"})
                 continue
 
             # --- MATCHER 7: Platform ---
             plat_m = PLATFORM_VER.search(event_text)
             if plat_m:
                 metadata["platform_version"] = plat_m.group(1).strip()
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "system"})
                 continue
 
             # --- MATCHER 7: Headset ---
@@ -298,6 +355,7 @@ def parse_log_file(file_path: str) -> dict:
                     "event_type": "headset_connected",
                     "description": f"{hs_m.group(1)}, ID={hs_m.group(2)}",
                 })
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "system"})
                 continue
 
             # --- MATCHER 8: Warning ---
@@ -330,6 +388,7 @@ def parse_log_file(file_path: str) -> dict:
                         "offending_value": None,
                         "threshold_value": None,
                     })
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "warning"})
                 continue
 
             # --- MATCHER 9: Hex error ---
@@ -362,6 +421,7 @@ def parse_log_file(file_path: str) -> dict:
                         "offending_value": code,
                         "threshold_value": None,
                     })
+                log_lines_batch.append({"line_number": line_number, "content": line, "category": "error"})
                 continue
 
     # Finalize last operator session
@@ -418,6 +478,7 @@ def parse_log_file(file_path: str) -> dict:
         "anomalies": anomaly_batch,
         "operators": operator_sessions,
         "system_events": system_batch,
+        "log_lines": log_lines_batch,
     }
 
 

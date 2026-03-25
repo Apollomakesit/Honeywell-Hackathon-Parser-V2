@@ -27,6 +27,7 @@ model Device {
   anomalies        Anomaly[]
   operatorSessions OperatorSession[]
   systemEvents     SystemEvent[]
+  logLines         LogLine[]
 
   @@map("devices")
 }
@@ -53,6 +54,7 @@ model LogImport {
   anomalies        Anomaly[]
   operatorSessions OperatorSession[]
   systemEvents     SystemEvent[]
+  logLines         LogLine[]
 
   @@unique([deviceId, logStartTime, logStopTime])
   @@map("log_imports")
@@ -206,4 +208,20 @@ model SystemEvent {
 
   @@index([deviceId, serverTime])
   @@map("system_events")
+}
+
+model LogLine {
+  id          String   @id @default(uuid())
+  deviceId    String   @map("device_id")
+  logImportId String   @map("log_import_id")
+  lineNumber  Int      @map("line_number")
+  content     String
+  category    String?
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, lineNumber])
+  @@index([deviceId, category])
+  @@map("log_lines")
 }

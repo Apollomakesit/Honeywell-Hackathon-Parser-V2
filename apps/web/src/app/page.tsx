@@ -9,6 +9,7 @@ import BatteryTab from '@/components/BatteryTab';
 import WifiRoamingTab from '@/components/WifiRoamingTab';
 import AnomaliesTab from '@/components/AnomaliesTab';
 import TimelineTab from '@/components/TimelineTab';
+import RawLogTab from '@/components/RawLogTab';
 import ExportButtons from '@/components/ExportButtons';
 
 interface DeviceEntry {
@@ -108,6 +109,7 @@ export default function DashboardPage() {
             {selectedSerial && activeTab === 'wifi' && <WifiRoamingTab serial={selectedSerial} />}
             {selectedSerial && activeTab === 'anomalies' && <AnomaliesTab serial={selectedSerial} />}
             {selectedSerial && activeTab === 'timeline' && <TimelineTab serial={selectedSerial} />}
+            {selectedSerial && activeTab === 'rawlog' && <RawLogTab serial={selectedSerial} />}
           </div>
         </main>
       </div>

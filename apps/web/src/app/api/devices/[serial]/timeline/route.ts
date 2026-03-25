@@ -17,6 +17,8 @@ export async function GET(
   const limit = Math.min(parseInt(searchParams.get('limit') || '200'), 500);
   const offset = parseInt(searchParams.get('offset') || '0');
   const search = searchParams.get('search') || '';
+  const typesParam = searchParams.get('types') || '';
+  const allowedTypes = typesParam ? new Set(typesParam.split(',')) : null;
 
   type TimelineEvent = {
     time: Date;
@@ -94,9 +96,12 @@ export async function GET(
   events.sort((a, b) => b.time.getTime() - a.time.getTime());
 
   let filtered = events;
+  if (allowedTypes) {
+    filtered = filtered.filter((e) => allowedTypes.has(e.type));
+  }
   if (search) {
     const q = search.toLowerCase();
-    filtered = events.filter((e) => e.description.toLowerCase().includes(q));
+    filtered = filtered.filter((e) => e.description.toLowerCase().includes(q));
   }
 
   return NextResponse.json({

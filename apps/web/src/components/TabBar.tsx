@@ -6,6 +6,7 @@ const TABS = [
   { id: 'wifi', label: 'WiFi & Roaming' },
   { id: 'anomalies', label: 'Anomalies' },
   { id: 'timeline', label: 'Timeline' },
+  { id: 'rawlog', label: 'Raw Log' },
 ];
 
 interface TabBarProps {

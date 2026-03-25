@@ -200,6 +200,22 @@ async def bulk_insert_system_events(conn: asyncpg.Connection, device_id: str,
         )
 
 
+async def bulk_insert_log_lines(conn: asyncpg.Connection, device_id: str,
+                                 import_id: str, records: list[dict]):
+    """Batch insert raw log lines."""
+    for i in range(0, len(records), BATCH_SIZE):
+        batch = records[i:i + BATCH_SIZE]
+        await conn.executemany(
+            """INSERT INTO log_lines (id, device_id, log_import_id, line_number, content, category)
+               VALUES ($1, $2, $3, $4, $5, $6)""",
+            [
+                (str(uuid.uuid4()), device_id, import_id,
+                 r["line_number"], r["content"], r.get("category"))
+                for r in batch
+            ],
+        )
+
+
 async def store_parse_results(pool: asyncpg.Pool, filename: str, file_size: int,
                                parsed: dict) -> dict:
     """Store all parsed data in PostgreSQL. Returns summary."""
@@ -239,6 +255,7 @@ async def store_parse_results(pool: asyncpg.Pool, filename: str, file_size: int,
             await bulk_insert_anomalies(conn, device_id, import_id, parsed["anomalies"])
             await bulk_insert_operators(conn, device_id, import_id, parsed["operators"])
             await bulk_insert_system_events(conn, device_id, import_id, parsed["system_events"])
+            await bulk_insert_log_lines(conn, device_id, import_id, parsed.get("log_lines", []))
 
     return {
         "status": "completed",
