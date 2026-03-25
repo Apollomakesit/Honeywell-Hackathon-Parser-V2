@@ -1,0 +1,16 @@
+export const TOOLTIPS: Record<string, string> = {
+  "TTE": "Time To Empty — battery controller's estimate of remaining runtime in minutes based on current draw rate.",
+  "RSSI": "Received Signal Strength Indicator — measured in dBm. Device reports as %, where 100% ≈ -30 dBm, 0% ≈ -90 dBm.",
+  "Roam": "When device switches from one Access Point to another. Frequent roaming = coverage overlap or AP power imbalance.",
+  "ODR": "Output Data Record — completed work transaction (e.g., pick confirmation) queued for upload to host system.",
+  "Tick": "Internal millisecond counter incrementing from boot. A reset (drop to small number) indicates device reboot.",
+  "Continuous Socket": "Internal inter-process communication channel on port 15008. Failures block ODR transmission and task data sync.",
+  "Energy Consumption": "Cumulative battery discharge in milliamp-hours since last full charge. Increasingly negative = more used.",
+  "EAP": "Extensible Authentication Protocol — enterprise WiFi auth. Failures here mean the device can't join the network.",
+  "Flash": "Internal non-volatile storage. Low flash warnings mean the device may lose data or shut down.",
+  "Signal Samples": "10 consecutive RSSI measurements. Wide variance indicates unstable RF environment.",
+  "CAM": "Constantly Aware Mode — WiFi radio always on. Best connectivity but highest power draw.",
+  "PSP": "Power Save Polling — WiFi radio sleeps in intervals. Saves battery but may reduce connectivity.",
+  "VocollectPowerMgmtService": "Internal battery monitoring service that reports charge level, runtime, voltage, temperature every ~3 minutes.",
+  "SRX": "Honeywell's wireless Bluetooth headset series for voice-directed work terminals.",
+};

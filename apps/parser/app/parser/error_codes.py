@@ -1,0 +1,26 @@
+"""Hex error code lookup table for Vocollect Talkman devices."""
+
+ERROR_CODES: dict[str, tuple[str, str, str]] = {
+    "0x1402": ("Receive error", "SOCKET", "WARNING"),
+    "0x1403": ("Send error", "SOCKET", "WARNING"),
+    "0x1406": ("GetIdFromName error", "SOCKET", "WARNING"),
+    "0x140a": ("Config file close error", "SYSTEM", "WARNING"),
+    "0x140f": ("Config file delete error", "SYSTEM", "WARNING"),
+    "0x1410": ("NTI registration failed", "SOCKET", "CRITICAL"),
+    "0x1411": ("Unrecognized message", "SYSTEM", "WARNING"),
+    "0x1414": ("Unable to spawn barcode process", "SYSTEM", "CRITICAL"),
+    "0x1415": ("Unable to spawn serial process", "SYSTEM", "CRITICAL"),
+    "0x1417": ("Bad FTP command", "SOCKET", "WARNING"),
+    "0x141b": ("Bad socket command", "SOCKET", "WARNING"),
+    "0x1425": ("Socket host/IP bad", "SOCKET", "CRITICAL"),
+    "0x1426": ("Socket service/port bad", "SOCKET", "CRITICAL"),
+    "0x1427": ("Unable to send file via socket", "SOCKET", "CRITICAL"),
+    "0x1602": ("Low flash memory", "SYSTEM", "WARNING"),
+    "0x1603": ("Low flash — must upload now", "SYSTEM", "CRITICAL"),
+    "0x2112": ("Flash full — device turning off", "SYSTEM", "CRITICAL"),
+    "0x1216": ("Retraining word failed", "VOICE", "WARNING"),
+    "0x1217": ("Initializing operator failed", "VOICE", "CRITICAL"),
+    "0x1218": ("Failed to load task phonetic file", "VOICE", "CRITICAL"),
+    "0x1219": ("Failed to load task audio file", "VOICE", "CRITICAL"),
+    "0x1600": ("File Manager init failed", "SYSTEM", "CRITICAL"),
+}

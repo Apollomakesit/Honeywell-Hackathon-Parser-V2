@@ -1,0 +1,209 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Device {
+  id              String   @id @default(uuid())
+  serialNumber    String   @unique @map("serial_number")
+  terminalName    String?  @map("terminal_name")
+  firmwareVersion String?  @map("firmware_version")
+  macAddress      String?  @map("mac_address")
+  platformVersion String?  @map("platform_version")
+  firstSeen       DateTime @map("first_seen")
+  lastSeen        DateTime @map("last_seen")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  logImports       LogImport[]
+  batteryReadings  BatteryReading[]
+  wifiReadings     WifiReading[]
+  roamEvents       RoamEvent[]
+  connectionEvents ConnectionEvent[]
+  anomalies        Anomaly[]
+  operatorSessions OperatorSession[]
+  systemEvents     SystemEvent[]
+
+  @@map("devices")
+}
+
+model LogImport {
+  id            String   @id @default(uuid())
+  deviceId      String   @map("device_id")
+  filename      String
+  logStartTime  DateTime @map("log_start_time")
+  logStopTime   DateTime @map("log_stop_time")
+  logType       String   @default("standard") @map("log_type")
+  ipAddress     String?  @map("ip_address")
+  lineCount     Int?     @map("line_count")
+  fileSizeBytes BigInt?  @map("file_size_bytes")
+  status        String   @default("processing")
+  errorMessage  String?  @map("error_message")
+  importedAt    DateTime @default(now()) @map("imported_at")
+
+  device           Device             @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  batteryReadings  BatteryReading[]
+  wifiReadings     WifiReading[]
+  roamEvents       RoamEvent[]
+  connectionEvents ConnectionEvent[]
+  anomalies        Anomaly[]
+  operatorSessions OperatorSession[]
+  systemEvents     SystemEvent[]
+
+  @@unique([deviceId, logStartTime, logStopTime])
+  @@map("log_imports")
+}
+
+model BatteryReading {
+  id               String   @id @default(uuid())
+  deviceId         String   @map("device_id")
+  logImportId      String   @map("log_import_id")
+  serverTime       DateTime @map("server_time")
+  deviceTime       String   @map("device_time")
+  tick             BigInt
+  lineNumber       Int      @map("line_number")
+  runtimeMinutes   Int?     @map("runtime_minutes")
+  percentRemaining Int?     @map("percent_remaining")
+  volts            Decimal? @db.Decimal(5, 3)
+  energyConsumption Int?    @map("energy_consumption")
+  temperatureC     Decimal? @map("temperature_c") @db.Decimal(4, 1)
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, serverTime])
+  @@map("battery_readings")
+}
+
+model WifiReading {
+  id                String   @id @default(uuid())
+  deviceId          String   @map("device_id")
+  logImportId       String   @map("log_import_id")
+  serverTime        DateTime @map("server_time")
+  deviceTime        String   @map("device_time")
+  tick              BigInt
+  lineNumber        Int      @map("line_number")
+  signalStrengthPct Int?     @map("signal_strength_pct")
+  signalSamples     Int[]    @map("signal_samples")
+  accessPointMac    String?  @map("access_point_mac")
+  operatorName      String?  @map("operator_name")
+  cpuUsage          Decimal? @map("cpu_usage") @db.Decimal(5, 2)
+  ramLoadPct        Int?     @map("ram_load_pct")
+  flashAvailKb      Int?     @map("flash_avail_kb")
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, serverTime])
+  @@map("wifi_readings")
+}
+
+model RoamEvent {
+  id          String   @id @default(uuid())
+  deviceId    String   @map("device_id")
+  logImportId String   @map("log_import_id")
+  serverTime  DateTime @map("server_time")
+  deviceTime  String   @map("device_time")
+  tick        BigInt
+  lineNumber  Int      @map("line_number")
+  fromAp      String   @map("from_ap")
+  toAp        String   @map("to_ap")
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, serverTime])
+  @@map("roam_events")
+}
+
+model ConnectionEvent {
+  id              String   @id @default(uuid())
+  deviceId        String   @map("device_id")
+  logImportId     String   @map("log_import_id")
+  serverTime      DateTime @map("server_time")
+  deviceTime      String   @map("device_time")
+  tick            BigInt
+  lineNumber      Int      @map("line_number")
+  eventType       String   @map("event_type")
+  host            String?
+  port            Int?
+  connectionCount Int?     @map("connection_count")
+  errorCount      Int?     @map("error_count")
+  errorDetail     String?  @map("error_detail")
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, serverTime])
+  @@map("connection_events")
+}
+
+model OperatorSession {
+  id            String   @id @default(uuid())
+  deviceId      String   @map("device_id")
+  logImportId   String   @map("log_import_id")
+  operatorExtId String?  @map("operator_ext_id")
+  operatorName  String   @map("operator_name")
+  sessionStart  DateTime @map("session_start")
+  sessionEnd    DateTime @map("session_end")
+  readingCount  Int      @default(0) @map("reading_count")
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId])
+  @@index([operatorName])
+  @@map("operator_sessions")
+}
+
+model Anomaly {
+  id              String   @id @default(uuid())
+  deviceId        String   @map("device_id")
+  logImportId     String   @map("log_import_id")
+  family          String
+  severity        String
+  ruleId          String   @map("rule_id")
+  title           String
+  description     String?
+  tooltip         String?
+  firstLine       Int      @map("first_line")
+  lastLine        Int      @map("last_line")
+  triggerLines    String   @map("trigger_lines")
+  serverTime      DateTime @map("server_time")
+  deviceTime      String?  @map("device_time")
+  tick            BigInt?
+  offendingValue  String?  @map("offending_value")
+  thresholdValue  String?  @map("threshold_value")
+  detectedAt      DateTime @default(now()) @map("detected_at")
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId])
+  @@index([family])
+  @@index([severity])
+  @@index([serverTime])
+  @@map("anomalies")
+}
+
+model SystemEvent {
+  id          String   @id @default(uuid())
+  deviceId    String   @map("device_id")
+  logImportId String   @map("log_import_id")
+  serverTime  DateTime @map("server_time")
+  deviceTime  String   @map("device_time")
+  tick        BigInt
+  lineNumber  Int      @map("line_number")
+  eventType   String   @map("event_type")
+  description String
+
+  device    Device    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  logImport LogImport @relation(fields: [logImportId], references: [id], onDelete: Cascade)
+
+  @@index([deviceId, serverTime])
+  @@map("system_events")
+}
