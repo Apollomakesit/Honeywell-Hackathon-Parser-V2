@@ -6,6 +6,7 @@ import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
 } from 'recharts';
 import StatsCard from './StatsCard';
+import InsightsPanel from './InsightsPanel';
 
 interface OverviewTabProps {
   serial: string;
@@ -128,7 +129,12 @@ export default function OverviewTab({ serial }: OverviewTabProps) {
         />
       </div>
 
-      {/* Row 3: Sparklines */}
+      {/* Row 3: Auto-Generated Insights */}
+      <div className="bg-slate-900 border border-slate-700/50 rounded-xl p-5">
+        <InsightsPanel serial={serial} />
+      </div>
+
+      {/* Row 4: Sparklines */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-slate-900 border border-slate-700/50 rounded-xl p-4">
           <h4 className="text-xs text-slate-400 mb-2">Battery % Over Time</h4>
