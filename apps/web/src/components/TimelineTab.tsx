@@ -30,6 +30,8 @@ export default function TimelineTab({ serial }: TimelineTabProps) {
   const [offset, setOffset] = useState(0);
   const [loading, setLoading] = useState(false);
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(EVENT_TYPES));
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
 
   const toggleType = (type: string) => {
     setActiveTypes((prev) => {
@@ -46,7 +48,8 @@ export default function TimelineTab({ serial }: TimelineTabProps) {
       const o = reset ? 0 : offset;
       const params = new URLSearchParams({ limit: '200', offset: String(o) });
       if (search) params.set('search', search);
-      // Send active type filters
+      if (dateFrom) params.set('from', new Date(dateFrom).toISOString());
+      if (dateTo) params.set('to', new Date(dateTo + 'T23:59:59').toISOString());
       if (activeTypes.size < EVENT_TYPES.length) {
         params.set('types', Array.from(activeTypes).join(','));
       }
@@ -64,13 +67,13 @@ export default function TimelineTab({ serial }: TimelineTabProps) {
       setTotal(data.total);
       setLoading(false);
     },
-    [serial, search, offset, activeTypes]
+    [serial, search, offset, activeTypes, dateFrom, dateTo]
   );
 
   useEffect(() => {
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serial, search, activeTypes]);
+  }, [serial, search, activeTypes, dateFrom, dateTo]);
 
   return (
     <div className="p-6">
@@ -87,7 +90,34 @@ export default function TimelineTab({ serial }: TimelineTabProps) {
         </span>
       </div>
 
-      {/* Event type filter chips */}
+      {/* Date range + event type filters */}
+      <div className="flex items-center gap-3 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-slate-500">From:</span>
+          <input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => { setDateFrom(e.target.value); setOffset(0); }}
+            className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200"
+          />
+          <span className="text-xs text-slate-500">To:</span>
+          <input
+            type="date"
+            value={dateTo}
+            onChange={(e) => { setDateTo(e.target.value); setOffset(0); }}
+            className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200"
+          />
+          {(dateFrom || dateTo) && (
+            <button
+              onClick={() => { setDateFrom(''); setDateTo(''); setOffset(0); }}
+              className="text-xs text-slate-500 hover:text-slate-300"
+            >
+              Clear dates
+            </button>
+          )}
+        </div>
+      </div>
+
       <div className="flex items-center gap-2 mb-4">
         <span className="text-xs text-slate-500 mr-1">Filter:</span>
         {EVENT_TYPES.map((type) => (

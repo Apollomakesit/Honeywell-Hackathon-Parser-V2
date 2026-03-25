@@ -18,6 +18,8 @@ export async function GET(
   const offset = parseInt(searchParams.get('offset') || '0');
   const search = searchParams.get('search') || '';
   const category = searchParams.get('category') || '';
+  const lineFrom = searchParams.get('lineFrom');
+  const lineTo = searchParams.get('lineTo');
 
   const where: Record<string, unknown> = { deviceId: device.id };
 
@@ -27,6 +29,13 @@ export async function GET(
 
   if (search) {
     where.content = { contains: search, mode: 'insensitive' };
+  }
+
+  if (lineFrom || lineTo) {
+    const lineFilter: Record<string, number> = {};
+    if (lineFrom) lineFilter.gte = parseInt(lineFrom);
+    if (lineTo) lineFilter.lte = parseInt(lineTo);
+    where.lineNumber = lineFilter;
   }
 
   const [total, lines] = await Promise.all([

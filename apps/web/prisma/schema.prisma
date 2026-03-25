@@ -28,6 +28,7 @@ model Device {
   operatorSessions OperatorSession[]
   systemEvents     SystemEvent[]
   logLines         LogLine[]
+  alertThresholds  AlertThreshold[]
 
   @@map("devices")
 }
@@ -224,4 +225,18 @@ model LogLine {
   @@index([deviceId, lineNumber])
   @@index([deviceId, category])
   @@map("log_lines")
+}
+
+model AlertThreshold {
+  id        String  @id @default(uuid())
+  deviceId  String? @map("device_id")
+  ruleId    String  @map("rule_id")
+  value     Float
+  enabled   Boolean @default(true)
+
+  device Device? @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+
+  @@unique([deviceId, ruleId])
+  @@index([deviceId])
+  @@map("alert_thresholds")
 }

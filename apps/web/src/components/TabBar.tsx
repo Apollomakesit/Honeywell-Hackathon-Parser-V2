@@ -7,6 +7,8 @@ const TABS = [
   { id: 'anomalies', label: 'Anomalies' },
   { id: 'timeline', label: 'Timeline' },
   { id: 'rawlog', label: 'Raw Log' },
+  { id: 'trends', label: 'Trends' },
+  { id: 'thresholds', label: 'Thresholds' },
 ];
 
 interface TabBarProps {

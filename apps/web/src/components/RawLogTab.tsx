@@ -49,6 +49,8 @@ export default function RawLogTab({ serial }: RawLogTabProps) {
   const [highlightLine, setHighlightLine] = useState<number | null>(null);
   const searchTimeout = useRef<ReturnType<typeof setTimeout>>();
   const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [lineFrom, setLineFrom] = useState('');
+  const [lineTo, setLineTo] = useState('');
 
   // Debounce search input
   const handleSearchChange = (value: string) => {
@@ -67,6 +69,8 @@ export default function RawLogTab({ serial }: RawLogTabProps) {
       const params = new URLSearchParams({ limit: '500', offset: String(o) });
       if (debouncedSearch) params.set('search', debouncedSearch);
       if (category !== 'all') params.set('category', category);
+      if (lineFrom) params.set('lineFrom', lineFrom);
+      if (lineTo) params.set('lineTo', lineTo);
 
       const res = await fetch(`/api/devices/${serial}/logs?${params}`);
       const data = await res.json();
@@ -82,13 +86,13 @@ export default function RawLogTab({ serial }: RawLogTabProps) {
       if (data.categories) setCategories(data.categories);
       setLoading(false);
     },
-    [serial, debouncedSearch, category, offset]
+    [serial, debouncedSearch, category, offset, lineFrom, lineTo]
   );
 
   useEffect(() => {
     load(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serial, debouncedSearch, category]);
+  }, [serial, debouncedSearch, category, lineFrom, lineTo]);
 
   const highlightSearchTerm = (content: string) => {
     if (!debouncedSearch) return content;
@@ -129,6 +133,34 @@ export default function RawLogTab({ serial }: RawLogTabProps) {
         <span className="text-xs text-slate-500 whitespace-nowrap">
           {lines.length} of {total} lines
         </span>
+      </div>
+
+      {/* Line range filter */}
+      <div className="flex items-center gap-2 mb-3">
+        <span className="text-xs text-slate-500">Line range:</span>
+        <input
+          type="number"
+          placeholder="From"
+          value={lineFrom}
+          onChange={(e) => { setLineFrom(e.target.value); setOffset(0); }}
+          className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200 w-24"
+        />
+        <span className="text-xs text-slate-500">–</span>
+        <input
+          type="number"
+          placeholder="To"
+          value={lineTo}
+          onChange={(e) => { setLineTo(e.target.value); setOffset(0); }}
+          className="bg-slate-800 border border-slate-600 rounded-lg px-2 py-1 text-xs text-slate-200 w-24"
+        />
+        {(lineFrom || lineTo) && (
+          <button
+            onClick={() => { setLineFrom(''); setLineTo(''); setOffset(0); }}
+            className="text-xs text-slate-500 hover:text-slate-300"
+          >
+            Clear
+          </button>
+        )}
       </div>
 
       {/* Quick filter chips */}

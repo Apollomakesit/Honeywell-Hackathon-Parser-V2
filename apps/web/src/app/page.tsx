@@ -10,6 +10,9 @@ import WifiRoamingTab from '@/components/WifiRoamingTab';
 import AnomaliesTab from '@/components/AnomaliesTab';
 import TimelineTab from '@/components/TimelineTab';
 import RawLogTab from '@/components/RawLogTab';
+import ThresholdsTab from '@/components/ThresholdsTab';
+import TrendsTab from '@/components/TrendsTab';
+import CompareView from '@/components/CompareView';
 import ExportButtons from '@/components/ExportButtons';
 
 interface DeviceEntry {
@@ -29,6 +32,7 @@ export default function DashboardPage() {
   const [selectedSerial, setSelectedSerial] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [showUpload, setShowUpload] = useState(false);
+  const [compareMode, setCompareMode] = useState(false);
 
   const loadDevices = useCallback(async () => {
     try {
@@ -87,6 +91,18 @@ export default function DashboardPage() {
       <header className="h-14 bg-slate-900 border-b border-slate-700/50 flex items-center px-6 shrink-0">
         <h1 className="text-sm font-semibold text-slate-100">Honeywell Vocollect Log Parser</h1>
         <div className="ml-auto flex items-center gap-2">
+          {devices.length >= 2 && (
+            <button
+              onClick={() => setCompareMode(!compareMode)}
+              className={`px-3 py-1.5 text-xs rounded-lg border transition ${
+                compareMode
+                  ? 'bg-violet-600/20 border-violet-500/40 text-violet-300'
+                  : 'bg-slate-800 border-slate-600/40 text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              {compareMode ? '← Exit Compare' : '⇔ Compare Devices'}
+            </button>
+          )}
           {selectedSerial && <ExportButtons serial={selectedSerial} />}
         </div>
       </header>
@@ -102,15 +118,25 @@ export default function DashboardPage() {
 
         {/* Main content */}
         <main className="flex-1 flex flex-col overflow-hidden">
-          <TabBar active={activeTab} onChange={setActiveTab} />
-          <div className="flex-1 overflow-y-auto">
-            {selectedSerial && activeTab === 'overview' && <OverviewTab serial={selectedSerial} />}
-            {selectedSerial && activeTab === 'battery' && <BatteryTab serial={selectedSerial} />}
-            {selectedSerial && activeTab === 'wifi' && <WifiRoamingTab serial={selectedSerial} />}
-            {selectedSerial && activeTab === 'anomalies' && <AnomaliesTab serial={selectedSerial} />}
-            {selectedSerial && activeTab === 'timeline' && <TimelineTab serial={selectedSerial} />}
-            {selectedSerial && activeTab === 'rawlog' && <RawLogTab serial={selectedSerial} />}
-          </div>
+          {compareMode ? (
+            <div className="flex-1 overflow-y-auto">
+              <CompareView devices={devices} onClose={() => setCompareMode(false)} />
+            </div>
+          ) : (
+            <>
+              <TabBar active={activeTab} onChange={setActiveTab} />
+              <div className="flex-1 overflow-y-auto">
+                {selectedSerial && activeTab === 'overview' && <OverviewTab serial={selectedSerial} />}
+                {selectedSerial && activeTab === 'battery' && <BatteryTab serial={selectedSerial} />}
+                {selectedSerial && activeTab === 'wifi' && <WifiRoamingTab serial={selectedSerial} />}
+                {selectedSerial && activeTab === 'anomalies' && <AnomaliesTab serial={selectedSerial} />}
+                {selectedSerial && activeTab === 'timeline' && <TimelineTab serial={selectedSerial} />}
+                {selectedSerial && activeTab === 'rawlog' && <RawLogTab serial={selectedSerial} />}
+                {selectedSerial && activeTab === 'thresholds' && <ThresholdsTab serial={selectedSerial} />}
+                {selectedSerial && activeTab === 'trends' && <TrendsTab serial={selectedSerial} />}
+              </div>
+            </>
+          )}
         </main>
       </div>
     </div>

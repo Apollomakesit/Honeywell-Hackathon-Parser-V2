@@ -19,6 +19,8 @@ export async function GET(
   const search = searchParams.get('search') || '';
   const typesParam = searchParams.get('types') || '';
   const allowedTypes = typesParam ? new Set(typesParam.split(',')) : null;
+  const fromDate = searchParams.get('from') ? new Date(searchParams.get('from')!) : null;
+  const toDate = searchParams.get('to') ? new Date(searchParams.get('to')!) : null;
 
   type TimelineEvent = {
     time: Date;
@@ -98,6 +100,12 @@ export async function GET(
   let filtered = events;
   if (allowedTypes) {
     filtered = filtered.filter((e) => allowedTypes.has(e.type));
+  }
+  if (fromDate) {
+    filtered = filtered.filter((e) => e.time >= fromDate);
+  }
+  if (toDate) {
+    filtered = filtered.filter((e) => e.time <= toDate);
   }
   if (search) {
     const q = search.toLowerCase();
