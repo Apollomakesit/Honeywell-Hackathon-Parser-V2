@@ -14,8 +14,8 @@ async def upsert_device(conn: asyncpg.Connection, device: dict) -> str:
     row = await conn.fetchrow(
         """
         INSERT INTO devices (id, serial_number, terminal_name, firmware_version, mac_address,
-                             platform_version, first_seen, last_seen)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+                             platform_version, first_seen, last_seen, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now(), now())
         ON CONFLICT (serial_number) DO UPDATE SET
             firmware_version = COALESCE(EXCLUDED.firmware_version, devices.firmware_version),
             mac_address = COALESCE(EXCLUDED.mac_address, devices.mac_address),
